@@ -41,7 +41,10 @@ if (process.env['VSCODE_PARENT_PID']) {
 }
 
 // Load AMD entry point
-require('./bootstrap-amd').load(process.env['VSCODE_AMD_ENTRYPOINT']);
+const entryPoint = process.env['VSCODE_AMD_ENTRYPOINT'];
+if (entryPoint) {
+	require('./bootstrap-amd').load(entryPoint).catch(error => console.error(error));
+}
 
 
 //#region Helpers

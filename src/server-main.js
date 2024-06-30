@@ -54,9 +54,12 @@ async function start() {
 	const nlsConfiguration = await resolveNLSConfiguration({ userLocale: 'en', osLocale: 'en', commit: product.commit, userDataPath: '', nlsMetadataPath: __dirname });
 
 	if (shouldSpawnCli) {
-		loadCode(nlsConfiguration).then((mod) => {
+		try {
+			const mod = await loadCode(nlsConfiguration);
 			mod.spawnCli();
-		});
+		} catch (error) {
+			console.error(error);
+		}
 		return;
 	}
 
@@ -265,30 +268,29 @@ async function findFreePort(host, start, end) {
  * @returns { Promise<typeof import('./vs/server/node/server.main')> }
  */
 function loadCode(nlsConfiguration) {
-	return new Promise((resolve, reject) => {
-		const path = require('path');
+	const path = require('path');
 
-		delete process.env['ELECTRON_RUN_AS_NODE']; // Keep bootstrap-amd.js from redefining 'fs'.
+	delete process.env['ELECTRON_RUN_AS_NODE']; // Keep bootstrap-amd.js from redefining 'fs'.
 
-		/** @type {INLSConfiguration} */
-		process.env['VSCODE_NLS_CONFIG'] = JSON.stringify(nlsConfiguration); // required for `bootstrap-amd` to pick up NLS messages
+	/** @type {INLSConfiguration} */
+	process.env['VSCODE_NLS_CONFIG'] = JSON.stringify(nlsConfiguration); // required for `bootstrap-amd` to pick up NLS messages
 
-		// See https://github.com/microsoft/vscode-remote-release/issues/6543
-		// We would normally install a SIGPIPE listener in bootstrap.js
-		// But in certain situations, the console itself can be in a broken pipe state
-		// so logging SIGPIPE to the console will cause an infinite async loop
-		process.env['VSCODE_HANDLES_SIGPIPE'] = 'true';
+	// See https://github.com/microsoft/vscode-remote-release/issues/6543
+	// We would normally install a SIGPIPE listener in bootstrap.js
+	// But in certain situations, the console itself can be in a broken pipe state
+	// so logging SIGPIPE to the console will cause an infinite async loop
+	process.env['VSCODE_HANDLES_SIGPIPE'] = 'true';
 
-		if (process.env['VSCODE_DEV']) {
-			// When running out of sources, we need to load node modules from remote/node_modules,
-			// which are compiled against nodejs, not electron
-			process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'] = process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'] || path.join(__dirname, '..', 'remote', 'node_modules');
-			require('./bootstrap-node').injectNodeModuleLookupPath(process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']);
-		} else {
-			delete process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'];
-		}
-		require('./bootstrap-amd').load('vs/server/node/server.main', resolve, reject);
-	});
+	if (process.env['VSCODE_DEV']) {
+		// When running out of sources, we need to load node modules from remote/node_modules,
+		// which are compiled against nodejs, not electron
+		process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'] = process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'] || path.join(__dirname, '..', 'remote', 'node_modules');
+		require('./bootstrap-node').injectNodeModuleLookupPath(process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH']);
+	} else {
+		delete process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'];
+	}
+
+	return require('./bootstrap-amd').load('vs/server/node/server.main');
 }
 
 function hasStdinWithoutTty() {

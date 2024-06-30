@@ -53,6 +53,7 @@ const BUILD_TARGETS = [
 const serverResources = [
 
 	// NLS
+	'out-build/nls.messages.js',
 	'out-build/nls.messages.json',
 
 	// Process monitor
@@ -75,9 +76,6 @@ const serverWithWebResources = [
 
 	// Include all of server...
 	...serverResources,
-
-	// NLS
-	'out-build/nls.messages.js',
 
 	// ...and all of web
 	...vscodeWebResourceIncludes

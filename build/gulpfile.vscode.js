@@ -51,6 +51,7 @@ const vscodeEntryPoints = [
 ].flat();
 
 const vscodeResources = [
+	'out-build/nls.messages.js',
 	'out-build/nls.messages.json',
 	'out-build/nls.keys.json',
 	'out-build/vs/**/*.{svg,png,html,jpg,mp3}',

@@ -134,7 +134,7 @@
 				userLocale,
 				osLocale,
 				resolvedLanguage: 'en',
-				defaultMessagesFile: path.join(nlsMetadataPath, 'nls.messages.json'),
+				defaultMessagesFile: path.join(nlsMetadataPath, 'nls.messages.js'),
 
 				// NLS: below 2 are a relic from old times only used by vscode-nls and deprecated
 				locale: 'en',
@@ -185,7 +185,7 @@
 				const languagePackId = `${languagePack.hash}.${resolvedLanguage}`;
 				const globalLanguagePackCachePath = path.join(userDataPath, 'clp', languagePackId);
 				const commitLanguagePackCachePath = path.join(globalLanguagePackCachePath, commit);
-				const languagePackMessagesFile = path.join(commitLanguagePackCachePath, 'nls.messages.json');
+				const languagePackMessagesFile = path.join(commitLanguagePackCachePath, 'nls.messages.js');
 				const translationsConfigFile = path.join(globalLanguagePackCachePath, 'tcf.json');
 				const languagePackCorruptMarkerFile = path.join(globalLanguagePackCachePath, 'corrupted.info');
 
@@ -198,7 +198,7 @@
 					userLocale,
 					osLocale,
 					resolvedLanguage,
-					defaultMessagesFile: path.join(nlsMetadataPath, 'nls.messages.json'),
+					defaultMessagesFile: path.join(nlsMetadataPath, 'nls.messages.js'),
 					languagePack: {
 						translationsConfigFile,
 						messagesFile: languagePackMessagesFile,
@@ -254,7 +254,11 @@
 				}
 
 				await Promise.all([
-					writeFile(languagePackMessagesFile, JSON.stringify(nlsResult)),
+					writeFile(languagePackMessagesFile, `/*---------------------------------------------------------
+ * Copyright (C) Microsoft Corporation. All rights reserved.
+ *--------------------------------------------------------*/
+globalThis._VSCODE_NLS_MESSAGES=${JSON.stringify(nlsResult)};
+globalThis._VSCODE_NLS_LANGUAGE=${JSON.stringify(resolvedLanguage)};`),
 					writeFile(translationsConfigFile, JSON.stringify(languagePack.translations))
 				]);
 

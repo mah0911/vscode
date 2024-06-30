@@ -73,7 +73,7 @@ function setupNLS() {
  * @returns {Promise<INLSConfiguration | undefined>}
  */
 async function doSetupNLS() {
-	performance.mark('code/fork/willLoadNls');
+	performance.mark('code/amd/willLoadNls');
 
 	/** @type {INLSConfiguration | undefined} */
 	let nlsConfig = undefined;
@@ -105,10 +105,9 @@ async function doSetupNLS() {
 	}
 
 	try {
-		// VSCODE_GLOBALS: NLS
-		globalThis._VSCODE_NLS_MESSAGES = JSON.parse((await fs.promises.readFile(messagesFile)).toString());
+		await doLoad(messagesFile);
 	} catch (error) {
-		console.error(`Error reading NLS messages file ${messagesFile}: ${error}`);
+		console.error(`Error loading NLS messages file ${messagesFile}: ${error}`);
 
 		// Mark as corrupt: this will re-create the language pack cache next startup
 		if (nlsConfig?.languagePack?.corruptMarkerFile) {
@@ -122,15 +121,14 @@ async function doSetupNLS() {
 		// Fallback to the default message file to ensure english translation at least
 		if (nlsConfig?.defaultMessagesFile && nlsConfig.defaultMessagesFile !== messagesFile) {
 			try {
-				// VSCODE_GLOBALS: NLS
-				globalThis._VSCODE_NLS_MESSAGES = JSON.parse((await fs.promises.readFile(nlsConfig.defaultMessagesFile)).toString());
+				await doLoad(nlsConfig.defaultMessagesFile);
 			} catch (error) {
-				console.error(`Error reading default NLS messages file ${nlsConfig.defaultMessagesFile}: ${error}`);
+				console.error(`Error loading default NLS messages file ${nlsConfig.defaultMessagesFile}: ${error}`);
 			}
 		}
 	}
 
-	performance.mark('code/fork/didLoadNls');
+	performance.mark('code/amd/didLoadNls');
 
 	return nlsConfig;
 }
@@ -138,14 +136,9 @@ async function doSetupNLS() {
 //#endregion
 
 /**
- * @param {string=} entrypoint
- * @param {(value: any) => void=} onLoad
- * @param {(err: Error) => void=} onError
+ * @param {string} entrypoint
  */
-exports.load = function (entrypoint, onLoad, onError) {
-	if (!entrypoint) {
-		return;
-	}
+function doLoad(entrypoint) {
 
 	// code cache config
 	if (process.env['VSCODE_CODE_CACHE_PATH']) {
@@ -157,11 +150,22 @@ exports.load = function (entrypoint, onLoad, onError) {
 		});
 	}
 
-	onLoad = onLoad || function () { };
-	onError = onError || function (err) { console.error(err); };
-
-	setupNLS().then(() => {
-		performance.mark('code/fork/willLoadCode');
-		loader([entrypoint], onLoad, onError);
+	return new Promise((resolve, reject) => {
+		loader([entrypoint], resolve, reject);
 	});
+}
+
+/**
+ * @param {string} entrypoint
+ */
+exports.load = async function (entrypoint) {
+	performance.mark('code/amd/willLoadCode');
+
+	try {
+		await setupNLS();
+
+		return await doLoad(entrypoint);
+	} finally {
+		performance.mark('code/amd/didLoadCode');
+	}
 };

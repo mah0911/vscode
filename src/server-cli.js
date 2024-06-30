@@ -33,7 +33,12 @@ async function start() {
 	} else {
 		delete process.env['VSCODE_INJECT_NODE_MODULE_LOOKUP_PATH'];
 	}
-	require('./bootstrap-amd').load('vs/server/node/server.cli');
+
+	try {
+		await require('./bootstrap-amd').load('vs/server/node/server.cli');
+	} catch (error) {
+		console.error(error);
+	}
 }
 
 start();

@@ -172,7 +172,7 @@ async function onReady() {
 			resolveNlsConfiguration()
 		]);
 
-		startup(codeCachePath, nlsConfig);
+		await startup(codeCachePath, nlsConfig);
 	} catch (error) {
 		console.error(error);
 	}
@@ -184,15 +184,14 @@ async function onReady() {
  * @param {string | undefined} codeCachePath
  * @param {INLSConfiguration} nlsConfig
  */
-function startup(codeCachePath, nlsConfig) {
+async function startup(codeCachePath, nlsConfig) {
 	process.env['VSCODE_NLS_CONFIG'] = JSON.stringify(nlsConfig);
 	process.env['VSCODE_CODE_CACHE_PATH'] = codeCachePath || '';
 
 	// Load main in AMD
 	perf.mark('code/willLoadMainBundle');
-	require('./bootstrap-amd').load('vs/code/electron-main/main', () => {
-		perf.mark('code/didLoadMainBundle');
-	});
+	await require('./bootstrap-amd').load('vs/code/electron-main/main');
+	perf.mark('code/didLoadMainBundle');
 }
 
 /**
@@ -668,7 +667,7 @@ async function resolveNlsConfiguration() {
 			userLocale: 'en',
 			osLocale,
 			resolvedLanguage: 'en',
-			defaultMessagesFile: path.join(__dirname, 'nls.messages.json'),
+			defaultMessagesFile: path.join(__dirname, 'nls.messages.js'),
 
 			// NLS: below 2 are a relic from old times only used by vscode-nls and deprecated
 			locale: 'en',

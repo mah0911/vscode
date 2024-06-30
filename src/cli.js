@@ -42,7 +42,11 @@ async function start() {
 	process.env['VSCODE_CLI'] = '1';
 
 	// Load CLI through AMD loader
-	require('./bootstrap-amd').load('vs/code/node/cli');
+	try {
+		await require('./bootstrap-amd').load('vs/code/node/cli');
+	} catch (error) {
+		console.error(error);
+	}
 }
 
 start();

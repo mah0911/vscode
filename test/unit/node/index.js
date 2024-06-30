@@ -88,8 +88,7 @@ function main() {
 		// when running from `out-build`, ensure to load the default
 		// messages file, because all `nls.localize` calls have their
 		// english values removed and replaced by an index.
-		// VSCODE_GLOBALS: NLS
-		globalThis._VSCODE_NLS_MESSAGES = require(`../../../${out}/nls.messages.json`);
+		require(`../../../${out}/nls.messages.js`);
 	}
 
 	// Test file operations that are common across platforms. Used for test infra, namely snapshot tests
