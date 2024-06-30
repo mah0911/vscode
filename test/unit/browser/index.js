@@ -247,7 +247,7 @@ async function runTestsInBrowser(testModules, browserType) {
 	await page.goto(target.href);
 
 	if (args.build) {
-		const nlsMessages = await fs.promises.readFile(path.join(out, 'nls.messages.json'), 'utf8');
+		require(`.${out}/nls.messages.js`);
 		await page.evaluate(value => {
 			// when running from `out-build`, ensure to load the default
 			// messages file, because all `nls.localize` calls have their
@@ -255,7 +255,7 @@ async function runTestsInBrowser(testModules, browserType) {
 			// VSCODE_GLOBALS: NLS
 			// @ts-ignore
 			globalThis._VSCODE_NLS_MESSAGES = JSON.parse(value);
-		}, nlsMessages);
+		}, globalThis._VSCODE_NLS_MESSAGES);
 	}
 
 	page.on('console', async msg => {
